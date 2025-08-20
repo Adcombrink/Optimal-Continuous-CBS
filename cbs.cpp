@@ -26,8 +26,8 @@ bool CBS::init_root(const Map &map, const Task &task)
             root.conflicts.push_back(conflict);
         else
         {
-            auto pathA = planner.find_path(task.get_agent(conflict.agent1), map, {get_constraint(conflict.agent1, conflict.move1, conflict.move2)}, h_values);
-            auto pathB = planner.find_path(task.get_agent(conflict.agent2), map, {get_constraint(conflict.agent2, conflict.move2, conflict.move1)}, h_values);
+            auto pathA = planner.find_path(task.get_agent(conflict.agent1), map, get_constraint(conflict.agent1, conflict.move1, conflict.move2), h_values);
+            auto pathB = planner.find_path(task.get_agent(conflict.agent2), map, get_constraint(conflict.agent2, conflict.move2, conflict.move1), h_values);
             //conflict.path1 = pathA;
             //conflict.path2 = pathB;
             if(pathA.cost > root.paths[conflict.agent1].cost && pathB.cost > root.paths[conflict.agent2].cost)
@@ -47,6 +47,7 @@ bool CBS::init_root(const Map &map, const Task &task)
 
 bool CBS::check_conflict(Move move1, Move move2)
 {
+
     double startTimeA(move1.t1), endTimeA(move1.t2), startTimeB(move2.t1), endTimeB(move2.t2);
     double m1i1(map->get_i(move1.id1)), m1i2(map->get_i(move1.id2)), m1j1(map->get_j(move1.id1)), m1j2(map->get_j(move1.id2));
     double m2i1(map->get_i(move2.id1)), m2i2(map->get_i(move2.id2)), m2j1(map->get_j(move2.id1)), m2j2(map->get_j(move2.id2));
@@ -67,51 +68,103 @@ bool CBS::check_conflict(Move move1, Move move2)
     double r(2*CN_AGENT_SIZE);
     Vector2D w(B - A);
     double c(w*w - r*r);
+
+
+    std::cout << "        c = " << c << std::endl;  
     if(c < 0)
+    {
+        std::cout << "        Returning True." << std::endl;
         return true;
+    }
 
     Vector2D v(VA - VB);
     double a(v*v);
     double b(w*v);
     double dscr(b*b - a*c);
+
+    std::cout << "        dscr = " << dscr << std::endl;
     if(dscr - CN_EPSILON < 0)
+    {
+        std::cout << "        Returning False." << std::endl;
         return false;
-    double ctime = (b - sqrt(dscr))/a;
-    if(ctime > -CN_EPSILON && ctime < std::min(endTimeB,endTimeA) - startTimeA + CN_EPSILON)
-        return true;
-    return false;
+    }
+
+
+    // For potential move-wait collisions, use the collision interval to detect collision. 
+    // This avoids minor numerical differences, where a collision is detected, but the added constraint does not avoid it.
+    // Otherwise, use default collision detection to catch move-move conflicts
+    if (move1.id1 == move1.id2 && move2.id1 != move2.id2)  // move1 is a wait, move2 is a move
+    {   
+
+        std::cout << "        Checking collision between wait (" << move1.id1 << ", " << move1.id2 << "|" << move1.t1 << ", " << move1.t2 << ") and move (" << move2.id1 << ", " << move2.id2 << "|" << move2.t1 << ", " << move2.t2 << ")" << std::endl;
+
+        const std::pair<double,double> coll_intr = get_move_wait_intersection_interval(move2, move1);
+        if (coll_intr.second < coll_intr.first + CN_EPSILON)
+            return false;
+        if (coll_intr.first < move1.t2 - CN_EPSILON && move1.t1 < coll_intr.second + CN_EPSILON)
+            return true;
+        return false;
+    }
+    else if (move1.id1 != move1.id2 && move2.id1 == move2.id2)  // move1 is a move, move2 is a wait
+    {
+
+        std::cout << "        Checking collision between move (" << move1.id1 << ", " << move1.id2 << "|" << move1.t1 << ", " << move1.t2 << ") and wait (" << move2.id1 << ", " << move2.id2 << "|" << move2.t1 << ", " << move2.t2 << ")" << std::endl;
+
+        const std::pair<double,double> coll_intr = get_move_wait_intersection_interval(move1, move2);
+        if (coll_intr.second < coll_intr.first + CN_EPSILON)
+            return false;
+        if (coll_intr.first < move2.t2 - CN_EPSILON && move2.t1 < coll_intr.second + CN_EPSILON)
+            return true;
+        return false;
+    }
+    else
+    {
+        double ctime = (b - sqrt(dscr))/a;
+        std::cout << "        ctime = " << ctime << std::endl;
+        if(ctime > -CN_EPSILON && ctime < std::min(endTimeB, endTimeA) - startTimeA + CN_EPSILON)
+        {
+            std::cout << "        Returning True: endTimeB=" << endTimeB << ", endTimeA=" << endTimeA << ", startTimeA=" << startTimeA << std::endl;
+            return true;
+        }
+        std::cout << "        Returning False." << std::endl;
+        return false;
+    }
+    
 }
 
 Constraint CBS::get_wait_constraint(int agent, Move move1, Move move2)
-{
+{   
+    // agent executes move1 which is a wait action
+
     double radius = 2*config.agent_size;
     double i0(map->get_i(move2.id1)), j0(map->get_j(move2.id1)), i1(map->get_i(move2.id2)), j1(map->get_j(move2.id2)), i2(map->get_i(move1.id1)), j2(map->get_j(move1.id1));
     std::pair<double,double> interval;
     Point point(i2,j2), p0(i0,j0), p1(i1,j1);
     int cls = point.classify(p0, p1);
-    double dist = fabs((i0 - i1)*j2 + (j1 - j0)*i2 + (j0*i1 - i0*j1))/sqrt(pow(i0 - i1, 2) + pow(j0 - j1, 2));
-    double da = (i0 - i2)*(i0 - i2) + (j0 - j2)*(j0 - j2);
-    double db = (i1 - i2)*(i1 - i2) + (j1 - j2)*(j1 - j2);
-    double ha = sqrt(da - dist*dist);
-    double size = sqrt(radius*radius - dist*dist);
-    if(cls == 3)
+    double dist = fabs((i0 - i1)*j2 + (j1 - j0)*i2 + (j0*i1 - i0*j1))/sqrt(pow(i0 - i1, 2) + pow(j0 - j1, 2));  // distance point to line
+    double da = (i0 - i2)*(i0 - i2) + (j0 - j2)*(j0 - j2);                                                      // squared distance point to line start
+    double db = (i1 - i2)*(i1 - i2) + (j1 - j2)*(j1 - j2);                                                      // squared distance point to line end
+    double ha = sqrt(da - dist*dist);                                                                           // how far along the line the perpendicular point is
+    double size = sqrt(radius*radius - dist*dist);                                                              // half cord length (of collision region)
+    
+    if(cls == 3) // before p0
     {
         interval.first = move2.t1;
         interval.second = move2.t1 + (sqrt(radius*radius - dist*dist) - ha);
     }
-    else if(cls == 4)
+    else if(cls == 4)  // after p1
     {
         interval.first = move2.t2 - sqrt(radius*radius - dist*dist) + sqrt(db - dist*dist);
         interval.second = move2.t2;
     }
-    else if(da < radius*radius)
+    else if(da < radius*radius)  // intersects p0
     {
-        if(db < radius*radius)
+        if(db < radius*radius)  // intersects both end-points
         {
             interval.first = move2.t1;
             interval.second = move2.t2;
         }
-        else
+        else  // intersects only p0
         {
             double hb = sqrt(db - dist*dist);
             interval.first = move2.t1;
@@ -120,12 +173,12 @@ Constraint CBS::get_wait_constraint(int agent, Move move1, Move move2)
     }
     else
     {
-        if(db < radius*radius)
+        if(db < radius*radius)  // intersects only p1
         {
             interval.first = move2.t1 + ha - size;
             interval.second = move2.t2;
         }
-        else
+        else  // somewhere along the segement (canonical case)
         {
             interval.first = move2.t1 + ha - size;
             interval.second = move2.t1 + ha + size;
@@ -183,27 +236,125 @@ double CBS::get_hl_heuristic(const std::list<Conflict> &conflicts)
     }
 }
 
-Constraint CBS::get_constraint(int agent, Move move1, Move move2)
+std::pair<double,double> CBS::get_move_wait_intersection_interval(Move move, Move wait)
 {
-    if(move1.id1 == move1.id2)
-        return get_wait_constraint(agent, move1, move2);
+    // Get intersection interval: interval when the moving agent intersects with an agent waiting indefinitely at the wait vertex
+    // Assumes: 
+    //  - agent speed = 1, 
+    //  - traversals in straight line from source to target points
+    //  - the infinite co-linear line through the traversed edge gets within 2r from the waiting vertex
+
+    double radius = 2*config.agent_size;
+    double i0(map->get_i(move.id1)), j0(map->get_j(move.id1)), i1(map->get_i(move.id2)), j1(map->get_j(move.id2)), i2(map->get_i(wait.id1)), j2(map->get_j(wait.id1));
+    std::pair<double,double> interval;
+    Point point(i2,j2), p0(i0,j0), p1(i1,j1);
+    
+    int cls = point.classify(p0, p1);
+    
+    double dist = fabs((i0 - i1)*j2 + (j1 - j0)*i2 + (j0*i1 - i0*j1))/sqrt(pow(i0 - i1, 2) + pow(j0 - j1, 2));  // distance from point to line
+    double da = (i0 - i2)*(i0 - i2) + (j0 - j2)*(j0 - j2);                                                      // squared distance from point to line start
+    double db = (i1 - i2)*(i1 - i2) + (j1 - j2)*(j1 - j2);                                                      // squared distance from point to line end
+
+    double ha = sqrt(da - dist*dist);                                                                           // distance from start to perpendicular point
+    double hb = sqrt(db - dist*dist);                                                                           // distance from end to perpendicular point
+    double size = sqrt(radius*radius - dist*dist);                                                              // half cord length (of collision region)
+    
+    if(cls == 3) // perpendicular point before p0
+    {
+        interval.first = move.t1;
+        interval.second = move.t1 + (size - ha);
+    }
+    else if(cls == 4)  // perpendicular point after p1
+    {
+        interval.first = move.t2 - (size - hb);
+        interval.second = move.t2;
+    }
+    // perpendicular point between p0 and p1 below this point
+    else if(da < radius*radius)
+    {
+        if(db < radius*radius)  // intersects both end-points
+        {
+            interval.first = move.t1;
+            interval.second = move.t2;
+        }
+        else  // intersects only p0
+        {
+            interval.first = move.t1;
+            interval.second = move.t1 + ha + size;
+        }
+    }
+    else
+    {
+        if(db < radius*radius)  // intersects only p1
+        {
+            interval.first = move.t1 + ha - size;
+            interval.second = move.t2;
+        }
+        else  // somewhere along the segement without intersecting end points (canonical case)
+        {
+            interval.first = move.t1 + ha - size;
+            interval.second = move.t1 + ha + size;
+        }
+    }
+
+    std::cout << "Move-wait intersection interval: [" << interval.first << ", " << interval.second << "]" << std::endl;
+
+    return interval;
+}
+
+std::list<Constraint> CBS::get_constraint(int agent, Move move1, Move move2)
+{
+    // Returns a vector of constraints
+    std::list<Constraint> constraints;
+    double gamma = 0.5;
+
+    // Move-wait conflict
+    if(move1.id1 == move1.id2)  // if move1 is a wait action
+    {
+        const std::pair<double,double> intr = get_move_wait_intersection_interval(move2, move1);
+        const double delta = std::min(gamma * (intr.second - intr.first), move1.t2 - intr.first);
+
+
+        // vertex constraint at wait vertex
+        constraints.emplace_back(agent, intr.first + delta, intr.second, move1.id1, move1.id1);
+
+        // constraint on all outgoing move from wait vertex
+        const gNode vtx = map->get_gNode(move1.id1);
+        for (int nb : vtx.neighbors) 
+        {
+            constraints.emplace_back(agent, intr.first + delta, intr.second, move1.id1, nb);
+        }
+        
+        return constraints;
+    }
+    else if(move2.id1 == move2.id2)  // if move2 is a wait action
+    {
+        const std::pair<double,double> intr = get_move_wait_intersection_interval(move1, move2);
+        const double delta = std::min(gamma * (intr.second - intr.first), move2.t2 - intr.first);
+        constraints.emplace_back(agent, move1.t1, move1.t1 + delta, move1.id1, move1.id2);
+        return constraints;
+    }
+
+
+    // Move-move conflict
     double startTimeA(move1.t1), endTimeA(move1.t2);
-    Vector2D A(map->get_i(move1.id1), map->get_j(move1.id1)), A2(map->get_i(move1.id2), map->get_j(move1.id2)),
-             B(map->get_i(move2.id1), map->get_j(move2.id1)), B2(map->get_i(move2.id2), map->get_j(move2.id2));
     if(move2.t2 == CN_INFINITY)
-        return Constraint(agent, move1.t1, CN_INFINITY, move1.id1, move1.id2);
-    double delta = move2.t2 - move1.t1;
-    while(delta > config.precision/2.0)
+    {
+        constraints.emplace_back(agent, move1.t1, CN_INFINITY, move1.id1, move1.id2);
+        return constraints;
+    }
+    double dt = move2.t2 - move1.t1;
+    while(dt > config.precision/2.0)
     {
         if(check_conflict(move1, move2))
         {
-            move1.t1 += delta;
-            move1.t2 += delta;
+            move1.t1 += dt;
+            move1.t2 += dt;
         }
         else
         {
-            move1.t1 -= delta;
-            move1.t2 -= delta;
+            move1.t1 -= dt;
+            move1.t2 -= dt;
         }
         if(move1.t1 > move2.t2 + CN_EPSILON)
         {
@@ -211,14 +362,15 @@ Constraint CBS::get_constraint(int agent, Move move1, Move move2)
             move1.t2 = move1.t1 + endTimeA - startTimeA;
             break;
         }
-        delta /= 2.0;
+        dt /= 2.0;
     }
-    if(delta < config.precision/2.0 + CN_EPSILON && check_conflict(move1, move2))
+    if(dt < config.precision/2.0 + CN_EPSILON && check_conflict(move1, move2))
     {
-        move1.t1 = fmin(move1.t1 + delta*2, move2.t2);
+        move1.t1 = fmin(move1.t1 + dt*2, move2.t2);
         move1.t2 = move1.t1 + endTimeA - startTimeA;
     }
-    return Constraint(agent, startTimeA, move1.t1, move1.id1, move1.id2);
+    constraints.emplace_back(agent, startTimeA, move1.t1, move1.id1, move1.id2);
+    return constraints;
 }
 Conflict CBS::get_conflict(std::list<Conflict> &conflicts)
 {
@@ -301,8 +453,8 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
         expanded++;
 
         std::list<Constraint> constraintsA = get_constraints(&node, conflict.agent1);
-        Constraint constraintA(get_constraint(conflict.agent1, conflict.move1, conflict.move2));
-        constraintsA.push_back(constraintA);
+        std::list<Constraint> newConsA = get_constraint(conflict.agent1, conflict.move1, conflict.move2);
+        constraintsA.insert(constraintsA.end(), newConsA.begin(), newConsA.end());
         sPath pathA;
         //if(!config.use_cardinal || !config.cache_paths)
         {
@@ -314,8 +466,8 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
         //    pathA = conflict.path1;
 
         std::list<Constraint> constraintsB = get_constraints(&node, conflict.agent2);
-        Constraint constraintB = get_constraint(conflict.agent2, conflict.move2, conflict.move1);
-        constraintsB.push_back(constraintB);
+        std::list<Constraint> newConsB = get_constraint(conflict.agent2, conflict.move2, conflict.move1);
+        constraintsB.insert(constraintsB.end(), newConsB.begin(), newConsB.end());
         sPath pathB;
         //if(!config.use_cardinal || !config.cache_paths)
         {
@@ -326,11 +478,30 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
         //else
         //    pathB = conflict.path2;
 
-        CBS_Node right({pathA}, parent, constraintA, node.cost + pathA.cost - get_cost(node, conflict.agent1), 0, node.total_cons + 1);
-        CBS_Node left({pathB}, parent, constraintB, node.cost + pathB.cost - get_cost(node, conflict.agent2), 0, node.total_cons + 1);
+
+        if (pathA.nodes.size() > 1)                       // only if two or more nodes
+        {
+            for (std::size_t i = 0; i + 1 < pathA.nodes.size(); ++i)
+            {
+                Move m(pathA.nodes[i], pathA.nodes[i + 1]);
+            }
+        }
+        if (pathB.nodes.size() > 1)
+        {
+            for (std::size_t i = 0; i + 1 < pathB.nodes.size(); ++i)
+            {
+                Move m(pathB.nodes[i], pathB.nodes[i + 1]);
+            }
+        }
+
+        CBS_Node right({pathA}, parent, newConsA, node.cost + pathA.cost - get_cost(node, conflict.agent1), 0, node.total_cons + 1);
+        CBS_Node left({pathB}, parent, newConsB, node.cost + pathB.cost - get_cost(node, conflict.agent2), 0, node.total_cons + 1);
         Constraint positive;
         bool inserted = false;
         bool left_ok = true, right_ok = true;
+
+        // REMOVED DISJOINT SPLITTING
+        /*
         if(config.use_disjoint_splitting)
         {
             int agent1positives(0), agent2positives(0);
@@ -381,6 +552,7 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
                 //    right_ok = false;
             }
         }
+        */
         right.id_str = node.id_str + "0";
         left.id_str = node.id_str + "1";
         right.id = id++;
@@ -503,12 +675,16 @@ void CBS::find_new_conflicts(const Map &map, const Task &task, CBS_Node &node, s
         std::list<Constraint> constraintsA, constraintsB;
         if(path.agentID == c.agent1)
         {
-            constraintsA = get_constraints(&node, c.agent1);
-            constraintsA.push_back(get_constraint(c.agent1, c.move1, c.move2));
+            constraintsA = get_constraints(&node, c.agent1); 
+            std::list<Constraint> extraA = get_constraint(c.agent1, c.move1, c.move2);
+            constraintsA.insert(constraintsA.end(), extraA.begin(), extraA.end());
             auto new_pathA = planner.find_path(task.get_agent(c.agent1), map, constraintsA, h_values);
+
             constraintsB = get_constraints(&node, c.agent2);
-            constraintsB.push_back(get_constraint(c.agent2, c.move2, c.move1));
+            std::list<Constraint> extraB = get_constraint(c.agent2, c.move2, c.move1);
+            constraintsB.insert(constraintsB.end(), extraB.begin(), extraB.end());
             auto new_pathB = planner.find_path(task.get_agent(c.agent2), map, constraintsB, h_values);
+
             double old_cost = get_cost(node, c.agent2);
             //c.path1 = new_pathA;
             //c.path2 = new_pathB;
@@ -541,12 +717,16 @@ void CBS::find_new_conflicts(const Map &map, const Task &task, CBS_Node &node, s
         }
         else
         {
-            constraintsA = get_constraints(&node, c.agent2);
-            constraintsA.push_back(get_constraint(c.agent2, c.move2, c.move1));
+            constraintsA = get_constraints(&node, c.agent2); 
+            std::list<Constraint> extraA = get_constraint(c.agent2, c.move2, c.move1);
+            constraintsA.insert(constraintsA.end(), extraA.begin(), extraA.end());
             auto new_pathA = planner.find_path(task.get_agent(c.agent2), map, constraintsA, h_values);
+            
             constraintsB = get_constraints(&node, c.agent1);
-            constraintsB.push_back(get_constraint(c.agent1, c.move1, c.move2));
+            std::list<Constraint> extraB = get_constraint(c.agent1, c.move1, c.move2);
+            constraintsB.insert(constraintsB.end(), extraB.begin(), extraB.end());
             auto new_pathB = planner.find_path(task.get_agent(c.agent1), map, constraintsB, h_values);
+
             double old_cost = get_cost(node, c.agent1);
             //c.path1 = new_pathB;
             //c.path2 = new_pathA;
@@ -588,17 +768,29 @@ void CBS::find_new_conflicts(const Map &map, const Task &task, CBS_Node &node, s
 
 std::list<Constraint> CBS::get_constraints(CBS_Node *node, int agent_id)
 {
-    CBS_Node* curNode = node;
-    std::list<Constraint> constraints(0);
-    while(curNode->parent != nullptr)
+    std::list<Constraint> result;
+    for (CBS_Node* cur = node; cur->parent != nullptr; cur = cur->parent)
     {
-        if(agent_id < 0 || curNode->constraint.agent == agent_id)
-            constraints.push_back(curNode->constraint);
-        if(curNode->positive_constraint.agent == agent_id)
-            constraints.push_back(curNode->positive_constraint);
-        curNode = curNode->parent;
+        if (agent_id < 0)
+        {
+            result.insert(result.end(),
+                          cur->constraint.begin(),
+                          cur->constraint.end());
+        }
+        else                              
+        {
+            for (const Constraint& c : cur->constraint)
+                if (c.agent == agent_id)
+                    result.push_back(c);
+        }
+
+        if (cur->positive_constraint.agent == agent_id ||
+            agent_id < 0)
+        {
+            result.push_back(cur->positive_constraint);
+        }
     }
-    return constraints;
+    return result;
 }
 
 
