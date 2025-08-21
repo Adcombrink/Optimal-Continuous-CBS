@@ -96,14 +96,14 @@ bool CBS::check_conflict(Move move1, Move move2)
     if (move1.id1 == move1.id2 && move2.id1 != move2.id2)  // move1 is a wait, move2 is a move
     {   
 
-        std::cout << "        Checking collision between wait (" << move1.id1 << ", " << move1.id2 << "|" << move1.t1 << ", " << move1.t2 << ") and move (" << move2.id1 << ", " << move2.id2 << "|" << move2.t1 << ", " << move2.t2 << ")" << std::endl;
+        // std::cout << "        Checking collision between wait (" << move1.id1 << ", " << move1.id2 << "|" << move1.t1 << ", " << move1.t2 << ") and move (" << move2.id1 << ", " << move2.id2 << "|" << move2.t1 << ", " << move2.t2 << ")" << std::endl;
 
         const std::pair<double,double> coll_intr = get_move_wait_intersection_interval(move2, move1);
-        std::cout << "            Collision interval: [" << coll_intr.first << ", " << coll_intr.second << "]" << std::endl;
+        // std::cout << "            Collision interval: [" << coll_intr.first << ", " << coll_intr.second << "]" << std::endl;
         //std::cout << "            move1.t1 = " << move1.t1 << ", move2.t2 = " << move2.t2 << std::endl;
         if (coll_intr.second < coll_intr.first + CN_EPSILON)
         {
-            std::cout << "            First, returning false." << std::endl;
+            // std::cout << "            First, returning false." << std::endl;
             return false;
         }
         if (coll_intr.first + CN_EPSILON < move1.t2 && move1.t1 < coll_intr.second - CN_EPSILON)
@@ -117,14 +117,14 @@ bool CBS::check_conflict(Move move1, Move move2)
     else if (move1.id1 != move1.id2 && move2.id1 == move2.id2)  // move1 is a move, move2 is a wait
     {
 
-        std::cout << "        Checking collision between move (" << move1.id1 << ", " << move1.id2 << "|" << move1.t1 << ", " << move1.t2 << ") and wait (" << move2.id1 << ", " << move2.id2 << "|" << move2.t1 << ", " << move2.t2 << ")" << std::endl;
+        // std::cout << "        Checking collision between move (" << move1.id1 << ", " << move1.id2 << "|" << move1.t1 << ", " << move1.t2 << ") and wait (" << move2.id1 << ", " << move2.id2 << "|" << move2.t1 << ", " << move2.t2 << ")" << std::endl;
 
         const std::pair<double,double> coll_intr = get_move_wait_intersection_interval(move1, move2);
-        std::cout << "            Collision interval: [" << coll_intr.first << ", " << coll_intr.second << "]" << std::endl;
+        // std::cout << "            Collision interval: [" << coll_intr.first << ", " << coll_intr.second << "]" << std::endl;
         //std::cout << "            move1.t1 = " << move1.t1 << ", move2.t2 = " << move2.t2 << std::endl;
         if (coll_intr.second < coll_intr.first + CN_EPSILON)
         {
-            std::cout << "            First, returning false." << std::endl;
+            // std::cout << "            First, returning false." << std::endl;
             return false;
         }
         if (coll_intr.first + CN_EPSILON < move2.t2 && move2.t1 < coll_intr.second - CN_EPSILON)
@@ -441,7 +441,7 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
     int id = 2;
     do
     {
-        std::cout << "-----------------------------------------------------------------------------------------" << std::endl;
+        // std::cout << "-----------------------------------------------------------------------------------------" << std::endl;
         auto parent = tree.get_front();
         node = *parent;
         node.cost -= node.h;
@@ -476,6 +476,7 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
         
 
         // PRINTING COLLISION AND CURRENT PATHS
+        /*
         std::cout << "Checking collision:  a" << conflict.agent1 << "-(" << conflict.move1.id1 << "," << conflict.move1.id2 << "|" << conflict.move1.t1 << "," << conflict.move1.t2 << ") and a" << conflict.agent2 << "-(" << conflict.move2.id1 << "," << conflict.move2.id2 << "|" << conflict.move2.t1 << "," << conflict.move2.t2 << ")" << std::endl;
         std::cout << "        Current path: a" << conflict.agent1 << ": ";
         auto p1 = paths[conflict.agent1];
@@ -493,12 +494,13 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
             std::cout << "(" << m.id1 << "," << m.id2 << "|" << m.t1 << "," << m.t2 << ") "; 
         }
         std::cout << std::endl;
-        
+        */
 
         std::list<Constraint> constraintsA = get_constraints(&node, conflict.agent1);
         std::list<Constraint> newConsA = get_constraint(conflict.agent1, conflict.move1, conflict.move2);
 
         // PRINTING AGENT1 CURRENT AND NEW CONSTRAINTS
+        /*
         std::cout << "        - Current constraints: a" << conflict.agent1 << ": ";
         for (const auto& c : constraintsA)
         {
@@ -511,6 +513,7 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
             std::cout << "(" << c.id1 << "," << c.id2 << "|" << c.t1 << "," << c.t2 << ") ";
         }
         std::cout << std::endl;
+        */
 
         constraintsA.insert(constraintsA.end(), newConsA.begin(), newConsA.end());
         sPath pathA;
@@ -527,6 +530,7 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
         std::list<Constraint> newConsB = get_constraint(conflict.agent2, conflict.move2, conflict.move1);
 
         // PRINTING AGENT2 CURRENT AND NEW CONSTRAINTS
+        /*
         std::cout << "        - Current constraints: a" << conflict.agent2 << ": ";
         for (const auto& c : constraintsB)
         {
@@ -539,7 +543,8 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
             std::cout << "(" << c.id1 << "," << c.id2 << "|" << c.t1 << "," << c.t2 << ") ";
         }
         std::cout << std::endl;
-
+        */
+        
         constraintsB.insert(constraintsB.end(), newConsB.begin(), newConsB.end());
         sPath pathB;
         //if(!config.use_cardinal || !config.cache_paths)

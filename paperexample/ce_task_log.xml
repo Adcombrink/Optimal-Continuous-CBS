@@ -5,7 +5,7 @@
     <agent start_id="1" goal_id="3"/>
     <agent start_id="0" goal_id="1"/>
     <log>
-        <summary time="0.003158292" flowtime="9.0000001727212435" makespan="3.0000001008166088"/>
+        <summary time="0.001366875" flowtime="9.0000001727212435" makespan="3.0000001008166088"/>
         <agent number="0">
             <path duration="3.0000000719046347">
                 <section number="0" start_i="0.5" start_j="0" goal_i="0.5" goal_j="0" duration="0.50000007190463469"/>
