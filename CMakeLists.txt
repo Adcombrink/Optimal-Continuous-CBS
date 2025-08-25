@@ -12,7 +12,7 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra" )
 # set( CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++" )
 
 set( SOURCE_FILES 
-     main.cpp  
+     # main.cpp  
 	 config.cpp
      tinyxml2.cpp
      xml_logger.cpp 
@@ -37,6 +37,7 @@ set( HEADER_FILES
      heuristic.h 
      sipp.h 
      task.h
+     benchmarking.h
      cbs.h
 	 structs.h
 	 simplex/columnset.h
@@ -57,4 +58,5 @@ set( HEADER_FILES
 	 simplex/sizemismatchexception.h
 	 simplex/variable.h)
 
-add_executable( CCBS ${SOURCE_FILES} ${HEADER_FILES} )
+add_executable( CCBS main.cpp ${SOURCE_FILES} ${HEADER_FILES} )
+add_executable( benchmarking benchmarking.cpp ${SOURCE_FILES} ${HEADER_FILES} )
