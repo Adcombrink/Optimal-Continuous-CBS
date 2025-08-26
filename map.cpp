@@ -4,11 +4,13 @@ bool Map::get_map(const char* FileName)
 {
     tinyxml2::XMLElement *root = nullptr;
     tinyxml2::XMLDocument doc;
+
     if (doc.LoadFile(FileName) != tinyxml2::XMLError::XML_SUCCESS)
     {
         std::cout << "Error opening XML file!" << std::endl;
         return false;
     }
+    
     root = doc.FirstChildElement(CNS_TAG_ROOT);
     if (root)
     {
@@ -66,6 +68,7 @@ bool Map::get_grid(const char* FileName)
         return false;
     }
 
+
     for (mapnode = map->FirstChildElement(); mapnode; mapnode = mapnode->NextSiblingElement())
     {
         element = mapnode->ToElement();
@@ -74,7 +77,11 @@ bool Map::get_grid(const char* FileName)
 
         stream.str("");
         stream.clear();
-        stream << element->GetText();
+
+        // Skip GetText() for grid element since it has child elements, not text
+        if (value != CNS_TAG_GRID) {
+            stream << element->GetText();
+        }
 
         if (!hasGridMem && hasHeight && hasWidth)
         {
@@ -185,6 +192,7 @@ bool Map::get_grid(const char* FileName)
         std::cout << "Error! There is no tag 'grid' in xml-file!\n";
         return false;
     }
+
     size = width*height;
     std::vector<Step> moves;
     valid_moves.resize(height*width);
