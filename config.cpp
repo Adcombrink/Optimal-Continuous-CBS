@@ -8,6 +8,7 @@ Config::Config()
     timelimit = CN_TIMELIMIT;
     focal_weight = CN_FOCAL_WEIGHT;
     precision = CN_PRECISION;
+    branching_gamma = CN_BRANCHING_GAMMA;
 }
 
 
@@ -199,5 +200,26 @@ void Config::getConfig(const char *fileName)
         stream.clear();
         stream.str("");
     }
+
+    element = algorithm->FirstChildElement("branching_gamma");
+    if (!element)
+    {
+        std::cout << "Error! No 'branching_gamma' element found inside '"<<CNS_TAG_ALGORITHM<<"' section. It's compared to '"<<CN_BRANCHING_GAMMA<<"'."<<std::endl;
+        branching_gamma = CN_BRANCHING_GAMMA;
+    }
+    else
+    {
+        auto value = element->GetText();
+        stream<<value;
+        stream>>branching_gamma;
+        if(branching_gamma <= 0 || branching_gamma >= 1)
+        {
+            branching_gamma = CN_BRANCHING_GAMMA;
+            std::cout << "Error! Wrong 'branching_gamma' value found inside '"<<CNS_TAG_ALGORITHM<<"' section. It's compared to '"<<CN_BRANCHING_GAMMA<<"'."<<std::endl;
+        }
+        stream.clear();
+        stream.str("");
+    }
+
     return;
 }

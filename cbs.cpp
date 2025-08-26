@@ -327,13 +327,12 @@ std::list<Constraint> CBS::get_constraint(int agent, Move move1, Move move2)
 {
     // Returns a vector of constraints
     std::list<Constraint> constraints;
-    double gamma = 0.5;
 
     // Move-wait conflict
     if(move1.id1 == move1.id2)  // if move1 is a wait action
     {
         const std::pair<double,double> intr = get_move_wait_intersection_interval(move2, move1);
-        const double delta = std::min(gamma * (intr.second - intr.first), move1.t2 - intr.first);
+        const double delta = std::min(config.branching_gamma * (intr.second - intr.first), move1.t2 - intr.first);
 
 
         // vertex constraint at wait vertex
@@ -351,7 +350,7 @@ std::list<Constraint> CBS::get_constraint(int agent, Move move1, Move move2)
     else if(move2.id1 == move2.id2)  // if move2 is a wait action
     {
         const std::pair<double,double> intr = get_move_wait_intersection_interval(move1, move2);
-        const double delta = std::min(gamma * (intr.second - intr.first), move2.t2 - intr.first);
+        const double delta = std::min(config.branching_gamma * (intr.second - intr.first), move2.t2 - intr.first);
         constraints.emplace_back(agent, move1.t1, move1.t1 + delta, move1.id1, move1.id2);
         return constraints;
     }

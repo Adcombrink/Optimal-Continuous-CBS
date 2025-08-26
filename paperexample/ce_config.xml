@@ -9,5 +9,6 @@
 		<agent_size>0.3535534</agent_size>
 		<timelimit>0.1</timelimit>
 		<precision>0.0000001</precision>
+		<branching_gamma>0.5</branching_gamma>
 	</algorithm>
 </root>
