@@ -24,6 +24,7 @@ public:
     bool check_conflict(Move move1, Move move2);
     double get_hl_heuristic(const std::list<Conflict> &conflicts);
     std::vector<Conflict> get_all_conflicts(const std::vector<sPath> &paths, int id);
+    std::pair<double,double> get_move_wait_intersection_interval(Move move, Move wait);
     Constraint get_constraint(int agent, Move move1, Move move2);
     Constraint get_wait_constraint(int agent, Move move1, Move move2);
     void find_new_conflicts(const Map &map, const Task &task, CBS_Node &node, std::vector<sPath> &paths, const sPath &path,

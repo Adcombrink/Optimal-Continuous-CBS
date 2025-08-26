@@ -22,7 +22,7 @@ struct BenchmarkJob {
     std::string original_config_file;
     int connectedness;
     std::string task_name;
-  int job_id;
+    int job_id;
 };
 
 struct BenchmarkResult {

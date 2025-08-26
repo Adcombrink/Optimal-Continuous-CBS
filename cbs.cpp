@@ -76,62 +76,41 @@ bool CBS::check_conflict(Move move1, Move move2)
     double dscr(b*b - a*c);
     if(dscr - CN_EPSILON < 0)
         return false;
-    double ctime = (b - sqrt(dscr))/a;
-    if(ctime > -CN_EPSILON && ctime < std::min(endTimeB,endTimeA) - startTimeA + CN_EPSILON)
-        return true;
-    return false;
-}
 
-Constraint CBS::get_wait_constraint(int agent, Move move1, Move move2)
-{
-    double radius = 2*config.agent_size;
-    double i0(map->get_i(move2.id1)), j0(map->get_j(move2.id1)), i1(map->get_i(move2.id2)), j1(map->get_j(move2.id2)), i2(map->get_i(move1.id1)), j2(map->get_j(move1.id1));
-    std::pair<double,double> interval;
-    Point point(i2,j2), p0(i0,j0), p1(i1,j1);
-    int cls = point.classify(p0, p1);
-    double dist = fabs((i0 - i1)*j2 + (j1 - j0)*i2 + (j0*i1 - i0*j1))/sqrt(pow(i0 - i1, 2) + pow(j0 - j1, 2));
-    double da = (i0 - i2)*(i0 - i2) + (j0 - j2)*(j0 - j2);
-    double db = (i1 - i2)*(i1 - i2) + (j1 - j2)*(j1 - j2);
-    double ha = sqrt(da - dist*dist);
-    double size = sqrt(radius*radius - dist*dist);
-    if(cls == 3)
-    {
-        interval.first = move2.t1;
-        interval.second = move2.t1 + (sqrt(radius*radius - dist*dist) - ha);
+    // For potential move-wait collisions, use the collision interval to detect collision. 
+    // This avoids minor numerical differences, where a collision is detected, but the added constraint does not avoid it.
+    // Otherwise, use default collision detection to catch move-move conflicts
+    if (move1.id1 == move1.id2 && move2.id1 != move2.id2)  // move1 is a wait, move2 is a move
+    {   
+        const std::pair<double,double> coll_intr = get_move_wait_intersection_interval(move2, move1);
+        if (coll_intr.second < coll_intr.first + CN_EPSILON)
+            return false;
+        if (coll_intr.first + CN_EPSILON < move1.t2 && move1.t1 < coll_intr.second - CN_EPSILON)
+            return true;
+        return false;
     }
-    else if(cls == 4)
+    else if (move1.id1 != move1.id2 && move2.id1 == move2.id2)  // move1 is a move, move2 is a wait
     {
-        interval.first = move2.t2 - sqrt(radius*radius - dist*dist) + sqrt(db - dist*dist);
-        interval.second = move2.t2;
-    }
-    else if(da < radius*radius)
-    {
-        if(db < radius*radius)
-        {
-            interval.first = move2.t1;
-            interval.second = move2.t2;
-        }
-        else
-        {
-            double hb = sqrt(db - dist*dist);
-            interval.first = move2.t1;
-            interval.second = move2.t2 - hb + size;
-        }
+        const std::pair<double,double> coll_intr = get_move_wait_intersection_interval(move1, move2);
+        if (coll_intr.second < coll_intr.first + CN_EPSILON)
+            return false;
+        if (coll_intr.first + CN_EPSILON < move2.t2 && move2.t1 < coll_intr.second - CN_EPSILON)
+            return true;
+        return false;
     }
     else
     {
-        if(db < radius*radius)
-        {
-            interval.first = move2.t1 + ha - size;
-            interval.second = move2.t2;
-        }
-        else
-        {
-            interval.first = move2.t1 + ha - size;
-            interval.second = move2.t1 + ha + size;
-        }
+        double ctime = (b - sqrt(dscr))/a;
+        if(ctime > -CN_EPSILON && ctime < std::min(endTimeB, endTimeA) - startTimeA + CN_EPSILON)
+            return true;
+        return false;
     }
-    return Constraint(agent, interval.first, interval.second, move1.id1, move1.id2);
+}
+
+Constraint CBS::get_wait_constraint(int agent, Move move1, Move move2)
+{   
+    const std::pair<double,double> intr = get_move_wait_intersection_interval(move2, move1);
+    return Constraint(agent, intr.first, intr.second, move1.id1, move1.id2);
 }
 
 double CBS::get_hl_heuristic(const std::list<Conflict> &conflicts)
@@ -181,6 +160,75 @@ double CBS::get_hl_heuristic(const std::list<Conflict> &conflicts)
         }
         return h_value;
     }
+}
+
+std::pair<double,double> CBS::get_move_wait_intersection_interval(Move move, Move wait)
+{
+    // Get intersection interval: interval when the moving agent intersects with an agent waiting indefinitely at the wait vertex.
+    // Assumes: 
+    //  - agent speed = 1, 
+    //  - traversals in straight line from source to target points
+    //  - the line (infinite) through the move action's two points gets within 2r from the waiting vertex
+    //
+    // If the intersection point is beyond the end points (so that the infinite line is within 2r from the waiting vertex but not the line segment), then the
+    // intersection interval will be inverted (second < first) which is useful to assert if a collision has occured or not.
+
+    double radius = 2*config.agent_size;
+    double i0(map->get_i(move.id1)), j0(map->get_j(move.id1)), i1(map->get_i(move.id2)), j1(map->get_j(move.id2)), i2(map->get_i(wait.id1)), j2(map->get_j(wait.id1));
+    std::pair<double,double> interval;
+    Point point(i2,j2), p0(i0,j0), p1(i1,j1);
+    
+    int cls = point.classify(p0, p1);
+    
+    double dist = fabs((i0 - i1)*j2 + (j1 - j0)*i2 + (j0*i1 - i0*j1))/sqrt(pow(i0 - i1, 2) + pow(j0 - j1, 2));  // distance from point to line
+    double da = (i0 - i2)*(i0 - i2) + (j0 - j2)*(j0 - j2);                                                      // squared distance from point to line start
+    double db = (i1 - i2)*(i1 - i2) + (j1 - j2)*(j1 - j2);                                                      // squared distance from point to line end
+
+    double ha = sqrt(da - dist*dist);                                                                           // distance from start to perpendicular point
+    double hb = sqrt(db - dist*dist);                                                                           // distance from end to perpendicular point
+    double size = sqrt(radius*radius - dist*dist);                                                              // half cord length (of collision region)
+    
+    if(cls == 3) // perpendicular point before p0
+    {
+        interval.first = move.t1;
+        interval.second = move.t1 + (size - ha);
+    }
+    else if(cls == 4)  // perpendicular point after p1
+    {
+        interval.first = move.t2 - (size - hb);
+        interval.second = move.t2;
+    }
+    // perpendicular point between p0 and p1 below this point
+    else if(da < radius*radius)  // intersects p0
+    {
+        if(db < radius*radius)  // intersects both end-points
+        {
+            interval.first = move.t1;
+            interval.second = move.t2;
+        }
+        else  // intersects only p0
+        {
+            interval.first = move.t1;
+            interval.second = move.t1 + ha + size;
+        }
+    }
+    else
+    {
+        if(db < radius*radius)  // intersects only p1
+        {
+            interval.first = move.t1 + ha - size;
+            interval.second = move.t2;
+        }
+        else  // somewhere along the segement without intersecting end points (canonical case)
+        {
+            interval.first = move.t1 + ha - size;
+            interval.second = move.t1 + ha + size;
+        }
+    }
+
+    //std::cout << "Move-wait intersection interval: [" << interval.first << ", " << interval.second << "]" << std::endl;
+
+    return interval;
 }
 
 Constraint CBS::get_constraint(int agent, Move move1, Move move2)
