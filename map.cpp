@@ -159,10 +159,18 @@ bool Map::get_grid(const char* FileName)
                 }
                 std::string str = element->GetText();
                 std::vector<std::string> elems;
-                std::stringstream ss(str);
-                std::string item;
-                while (std::getline(ss, item, ' '))
-                    elems.push_back(item);
+                if (str.find(' ') != std::string::npos) {
+                    // Has spaces - split by spaces (original logic)
+                    std::stringstream ss(str);
+                    std::string item;
+                    while (std::getline(ss, item, ' '))
+                        elems.push_back(item);
+                } else {
+                    // No spaces - treat each character as separate element
+                    for (char c : str) {
+                        elems.push_back(std::string(1, c));
+                    }
+                }
                 grid_j = 0;
                 int val;
                 if (elems.size() > 0)
