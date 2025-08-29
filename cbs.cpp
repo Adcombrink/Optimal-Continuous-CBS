@@ -65,30 +65,20 @@ bool CBS::check_conflict(Move move1, Move move2)
         B += VB*(startTimeA - startTimeB);
         startTimeB = startTimeA;
     }
-    double r(2*CN_AGENT_SIZE);
+    double r(2*config.agent_size);
     Vector2D w(B - A);
     double c(w*w - r*r);
 
-
-    //std::cout << "        c = " << c << std::endl;  
     if(c < 0)
-    {
-        //std::cout << "        Returning True." << std::endl;
         return true;
-    }
 
     Vector2D v(VA - VB);
     double a(v*v);
     double b(w*v);
     double dscr(b*b - a*c);
 
-    //std::cout << "        dscr = " << dscr << std::endl;
     if(dscr - CN_EPSILON < 0)
-    {
-        //std::cout << "        Returning False." << std::endl;
         return false;
-    }
-
 
     // For potential move-wait collisions, use the collision interval to detect collision. 
     // This avoids minor numerical differences, where a collision is detected, but the added constraint does not avoid it.
@@ -96,55 +86,27 @@ bool CBS::check_conflict(Move move1, Move move2)
     if (move1.id1 == move1.id2 && move2.id1 != move2.id2)  // move1 is a wait, move2 is a move
     {   
 
-        // std::cout << "        Checking collision between wait (" << move1.id1 << ", " << move1.id2 << "|" << move1.t1 << ", " << move1.t2 << ") and move (" << move2.id1 << ", " << move2.id2 << "|" << move2.t1 << ", " << move2.t2 << ")" << std::endl;
-
         const std::pair<double,double> coll_intr = get_move_wait_intersection_interval(move2, move1);
-        // std::cout << "            Collision interval: [" << coll_intr.first << ", " << coll_intr.second << "]" << std::endl;
-        //std::cout << "            move1.t1 = " << move1.t1 << ", move2.t2 = " << move2.t2 << std::endl;
         if (coll_intr.second < coll_intr.first + CN_EPSILON)
-        {
-            // std::cout << "            First, returning false." << std::endl;
             return false;
-        }
         if (coll_intr.first + CN_EPSILON < move1.t2 && move1.t1 < coll_intr.second - CN_EPSILON)
-        {
-            //std::cout << "            Second, returning true." << std::endl;
             return true;
-        }
-        //std::cout << "            Third, returning false." << std::endl;
         return false;
     }
     else if (move1.id1 != move1.id2 && move2.id1 == move2.id2)  // move1 is a move, move2 is a wait
     {
-
-        // std::cout << "        Checking collision between move (" << move1.id1 << ", " << move1.id2 << "|" << move1.t1 << ", " << move1.t2 << ") and wait (" << move2.id1 << ", " << move2.id2 << "|" << move2.t1 << ", " << move2.t2 << ")" << std::endl;
-
         const std::pair<double,double> coll_intr = get_move_wait_intersection_interval(move1, move2);
-        // std::cout << "            Collision interval: [" << coll_intr.first << ", " << coll_intr.second << "]" << std::endl;
-        //std::cout << "            move1.t1 = " << move1.t1 << ", move2.t2 = " << move2.t2 << std::endl;
         if (coll_intr.second < coll_intr.first + CN_EPSILON)
-        {
-            // std::cout << "            First, returning false." << std::endl;
             return false;
-        }
         if (coll_intr.first + CN_EPSILON < move2.t2 && move2.t1 < coll_intr.second - CN_EPSILON)
-        {
-            //std::cout << "            Second, returning true." << std::endl;
             return true;
-        }
-        //std::cout << "            Third, returning false." << std::endl;
         return false;
     }
     else
     {
         double ctime = (b - sqrt(dscr))/a;
-        //std::cout << "        ctime = " << ctime << std::endl;
         if(ctime > -CN_EPSILON && ctime < std::min(endTimeB, endTimeA) - startTimeA + CN_EPSILON)
-        {
-            //std::cout << "        Returning True: endTimeB=" << endTimeB << ", endTimeA=" << endTimeA << ", startTimeA=" << startTimeA << std::endl;
             return true;
-        }
-        //std::cout << "        Returning False." << std::endl;
         return false;
     }
     
@@ -881,19 +843,19 @@ Conflict CBS::check_paths(const sPath &pathA, const sPath &pathB)
         double dist = sqrt(pow(map->get_i(nodesA[a].id) - map->get_i(nodesB[b].id), 2) + pow(map->get_j(nodesA[a].id) - map->get_j(nodesB[b].id), 2)) - CN_EPSILON;
         if(a < nodesA.size() - 1 && b < nodesB.size() - 1) // if both agents have not reached their goals yet
         {
-            if(dist < (nodesA[a+1].g - nodesA[a].g) + (nodesB[b+1].g - nodesB[b].g) + CN_AGENT_SIZE*2)
+            if(dist < (nodesA[a+1].g - nodesA[a].g) + (nodesB[b+1].g - nodesB[b].g) + config.agent_size*2)
                 if(check_conflict(Move(nodesA[a], nodesA[a+1]), Move(nodesB[b], nodesB[b+1])))
                     return Conflict(pathA.agentID, pathB.agentID, Move(nodesA[a], nodesA[a+1]), Move(nodesB[b], nodesB[b+1]), std::min(nodesA[a].g, nodesB[b].g));
         }
         else if(a == nodesA.size() - 1) // if agent A has already reached the goal
         {
-            if(dist < (nodesB[b+1].g - nodesB[b].g) + CN_AGENT_SIZE*2)
+            if(dist < (nodesB[b+1].g - nodesB[b].g) + config.agent_size*2)
                 if(check_conflict(Move(nodesA[a].g, CN_INFINITY, nodesA[a].id, nodesA[a].id), Move(nodesB[b], nodesB[b+1])))
                     return Conflict(pathA.agentID, pathB.agentID, Move(nodesA[a].g, CN_INFINITY, nodesA[a].id, nodesA[a].id), Move(nodesB[b], nodesB[b+1]), std::min(nodesA[a].g, nodesB[b].g));
         }
         else if(b == nodesB.size() - 1) // if agent B has already reached the goal
         {
-            if(dist < (nodesA[a+1].g - nodesA[a].g) + CN_AGENT_SIZE*2)
+            if(dist < (nodesA[a+1].g - nodesA[a].g) + config.agent_size*2)
                 if(check_conflict(Move(nodesA[a], nodesA[a+1]), Move(nodesB[b].g, CN_INFINITY, nodesB[b].id, nodesB[b].id)))
                     return Conflict(pathA.agentID, pathB.agentID, Move(nodesA[a], nodesA[a+1]), Move(nodesB[b].g, CN_INFINITY, nodesB[b].id, nodesB[b].id), std::min(nodesA[a].g, nodesB[b].g));
         }
