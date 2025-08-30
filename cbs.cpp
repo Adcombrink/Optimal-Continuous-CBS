@@ -217,7 +217,7 @@ std::pair<double,double> CBS::get_move_wait_intersection_interval(Move move, Mov
     if (ce - cs < CN_EPSILON)
         return {1.0, -1.0};
 
-    return {cs, ce};
+    return {move.t1 + cs, move.t1 + ce};
 
 }
 
