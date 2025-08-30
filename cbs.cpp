@@ -164,71 +164,59 @@ double CBS::get_hl_heuristic(const std::list<Conflict> &conflicts)
 
 std::pair<double,double> CBS::get_move_wait_intersection_interval(Move move, Move wait)
 {
-    // Get intersection interval: interval when the moving agent intersects with an agent waiting indefinitely at the wait vertex.
-    // Assumes: 
-    //  - agent speed = 1, 
-    //  - traversals in straight line from source to target points
-    //  - the line (infinite) through the move action's two points gets within 2r from the waiting vertex
-    //
-    // If the intersection point is beyond the end points (so that the infinite line is within 2r from the waiting vertex but not the line segment), then the
-    // intersection interval will be inverted (second < first) which is useful to assert if a collision has occured or not.
+    // Returns the intersection interval for a move action and a wait action, or returns 
+    // a degenerate interval ([1, -1]) if no intersection interval exists. 
+    // 
+    // Assumptions: movement occurs in a straight line at constant speed 1.
 
-    double radius = 2*config.agent_size;
-    double i0(map->get_i(move.id1)), j0(map->get_j(move.id1)), i1(map->get_i(move.id2)), j1(map->get_j(move.id2)), i2(map->get_i(wait.id1)), j2(map->get_j(wait.id1));
-    std::pair<double,double> interval;
-    Point point(i2,j2), p0(i0,j0), p1(i1,j1);
-    
-    int cls = point.classify(p0, p1);
-    
-    double dist = fabs((i0 - i1)*j2 + (j1 - j0)*i2 + (j0*i1 - i0*j1))/sqrt(pow(i0 - i1, 2) + pow(j0 - j1, 2));  // distance from point to line
-    double da = (i0 - i2)*(i0 - i2) + (j0 - j2)*(j0 - j2);                                                      // squared distance from point to line start
-    double db = (i1 - i2)*(i1 - i2) + (j1 - j2)*(j1 - j2);                                                      // squared distance from point to line end
+    const double R = 2 * config.agent_size;
+    const double ps_x = map->get_i(move.id1);      // move starting x coordinate
+    const double ps_y = map->get_j(move.id1);      // move starting y coordinate
+    const double pe_x = map->get_i(move.id2);      // move ending x coordinate
+    const double pe_y = map->get_j(move.id2);      // move ending y coordinate
+    const double v_x = map->get_i(wait.id1);       // wait action vertex x coordinate
+    const double v_y = map->get_j(wait.id1);       // wait action vertex y coordinate
 
-    double ha = sqrt(da - dist*dist);                                                                           // distance from start to perpendicular point
-    double hb = sqrt(db - dist*dist);                                                                           // distance from end to perpendicular point
-    double size = sqrt(radius*radius - dist*dist);                                                              // half cord length (of collision region)
-    
-    if(cls == 3) // perpendicular point before p0
-    {
-        interval.first = move.t1;
-        interval.second = move.t1 + (size - ha);
-    }
-    else if(cls == 4)  // perpendicular point after p1
-    {
-        interval.first = move.t2 - (size - hb);
-        interval.second = move.t2;
-    }
-    // perpendicular point between p0 and p1 below this point
-    else if(da < radius*radius)  // intersects p0
-    {
-        if(db < radius*radius)  // intersects both end-points
-        {
-            interval.first = move.t1;
-            interval.second = move.t2;
-        }
-        else  // intersects only p0
-        {
-            interval.first = move.t1;
-            interval.second = move.t1 + ha + size;
-        }
-    }
-    else
-    {
-        if(db < radius*radius)  // intersects only p1
-        {
-            interval.first = move.t1 + ha - size;
-            interval.second = move.t2;
-        }
-        else  // somewhere along the segement without intersecting end points (canonical case)
-        {
-            interval.first = move.t1 + ha - size;
-            interval.second = move.t1 + ha + size;
-        }
-    }
+    // Get move edge length (d_e) and unit direction vector (dir_e)
+    const double d_e = sqrt(pow(pe_x - ps_x, 2) + pow(pe_y - ps_y, 2));  // length of the move action
+    const double dir_e_x = (pe_x - ps_x) / d_e;
+    const double dir_e_y = (pe_y - ps_y) / d_e;
 
-    //std::cout << "Move-wait intersection interval: [" << interval.first << ", " << interval.second << "]" << std::endl;
+    // Get the closest point on the infinite line - collinear to the move edge - of v (w) and 
+    // the signed distance from ps to w (a) in the direction of the move
+    const double v_to_ps_x = v_x - ps_x;
+    const double v_to_ps_y = v_y - ps_y;
+    const double a = v_to_ps_x * dir_e_x + v_to_ps_y * dir_e_y;
+    const double w_x = ps_x + a * dir_e_x;
+    const double w_y = ps_y + a * dir_e_y;
 
-    return interval;
+    // Get the distance from v to w
+    const double d_vw = sqrt(pow(v_x - w_x, 2) + pow(v_y - w_y, 2));
+
+    // Check for non-intersection
+    if (d_vw >= R + CN_EPSILON)  // check if close enough to the infinite collinear line
+        return {1.0, -1.0};  
+    const double d_v_to_ps = sqrt(pow(v_x - ps_x, 2) + pow(v_y - ps_y, 2));
+    if ((a <= 0) && (d_v_to_ps >= R + CN_EPSILON))  // if waiting vertex is behind the move start, check if close enough to ps
+        return {1.0, -1.0};
+    const double d_v_to_pe = sqrt(pow(v_x - pe_x, 2) + pow(v_y - pe_y, 2));
+    if ((a >= d_e) && (d_v_to_pe >= R + CN_EPSILON))  // if waiting vertex is beyond the move end, check if close enough to pe
+        return {1.0, -1.0};
+
+    // Get the half chord length (half the length of the infinite line within the R-circle at v)
+    const double c_sqr = std::max(0.0, pow(R, 2) - pow(d_vw, 2));  // clip to 0, in case numerical errors make c_sqr < 0.
+    const double c = sqrt(c_sqr);
+
+    // Get intersection interval bounds
+    const double cs = std::max(0.0, a - c);
+    const double ce = std::min(d_e, a + c);
+
+    // Final check for singular intersection (such as if c_sqr was clipped to 0.0)
+    if (ce - cs < CN_EPSILON)
+        return {1.0, -1.0};
+
+    return {cs, ce};
+
 }
 
 Constraint CBS::get_constraint(int agent, Move move1, Move move2)
