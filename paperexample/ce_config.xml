@@ -7,8 +7,8 @@
 		<connectedness>3</connectedness>
 		<focal_weight>1.0</focal_weight>
 		<agent_size>0.3535534</agent_size>
-		<timelimit>0.1</timelimit>
+		<timelimit>30</timelimit>
 		<precision>0.0000001</precision>
-		<branching_gamma>0.5</branching_gamma>
+		<branching_gamma>0.9</branching_gamma>
 	</algorithm>
 </root>
