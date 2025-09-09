@@ -28,8 +28,6 @@ bool CBS::init_root(const Map &map, const Task &task)
         {
             auto pathA = planner.find_path(task.get_agent(conflict.agent1), map, {get_constraint(conflict.agent1, conflict.move1, conflict.move2)}, h_values);
             auto pathB = planner.find_path(task.get_agent(conflict.agent2), map, {get_constraint(conflict.agent2, conflict.move2, conflict.move1)}, h_values);
-            //conflict.path1 = pathA;
-            //conflict.path2 = pathB;
             if(pathA.cost > root.paths[conflict.agent1].cost && pathB.cost > root.paths[conflict.agent2].cost)
             {
                 conflict.overcost = std::min(pathA.cost - root.paths[conflict.agent1].cost, pathB.cost - root.paths[conflict.agent2].cost);
@@ -384,7 +382,6 @@ Solution CBS::find_solution(const Map &map, const Task &task, const Config &cfg)
                     left.total_cons++;
                     constraintsB.push_back(left.positive_constraint);
                     inserted = true;
-                    //std::cout<<"added positive to "<<positive.agent<<"\n\n";
                 }
                 //else
                 //    right_ok = false;
@@ -545,8 +542,6 @@ void CBS::find_new_conflicts(const Map &map, const Task &task, CBS_Node &node, s
             constraintsB.push_back(get_constraint(c.agent2, c.move2, c.move1));
             auto new_pathB = planner.find_path(task.get_agent(c.agent2), map, constraintsB, h_values);
             double old_cost = get_cost(node, c.agent2);
-            //c.path1 = new_pathA;
-            //c.path2 = new_pathB;
             if(new_pathA.cost < 0 && new_pathB.cost < 0)
             {
                 node.cost = -1;
@@ -583,8 +578,6 @@ void CBS::find_new_conflicts(const Map &map, const Task &task, CBS_Node &node, s
             constraintsB.push_back(get_constraint(c.agent1, c.move1, c.move2));
             auto new_pathB = planner.find_path(task.get_agent(c.agent1), map, constraintsB, h_values);
             double old_cost = get_cost(node, c.agent1);
-            //c.path1 = new_pathB;
-            //c.path2 = new_pathA;
             if(new_pathA.cost < 0 && new_pathB.cost < 0)
             {
                 node.cost = -1;
