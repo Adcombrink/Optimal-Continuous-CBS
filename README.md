@@ -15,7 +15,7 @@ This is the official respository for **Optimal Multi-Agent Path Finding in Conti
 ## Abstract
 _Continuous-time Conflict Based-Search (CCBS) has long been viewed as the de facto optimal solver for multi-agent path finding in continuous time (MAPFR), yet recent critiques show that the theoretically described CCBS can fail to terminate on solvable MAPFR problems while the publicly available reference implementation can return sub-optimal solutions. This work presents an analytical framework that yields simple and sufficient conditions under which any CCBS-style algorithm is both sound (returns only optimal solutions) and solution complete (terminates on every solvable MAPFR problem). Investigating the reference implementation reveals that it violates the soundness conditions, with counterexamples demonstrating sub-optimality._
 
-_Leveraging the framework, we introduce a branching rule (_$\delta$_-BR) and prove it restores soundness and termination guarantees. Consequently, the resulting CCBS variant is both sound and solution complete, matching the guarantees of the discrete-time CBS for the first time in the continuous domain. On a constructed example, CCBS with _$\delta$_-BR improves sum-of-costs from 10.707 to 9.000 (_$\approx 16$_% lower) compared to the reference implementation. Across benchmarks, the reference implementation is generally able to find solutions faster than CCBS with $\delta$-BR due to its more aggressive pruning. However, this comes at the cost of occasional sub-optimality and potential non-termination when all solutions are pruned, whereas $\delta$-BR preserves optimality and guarantees termination by design. Because $\delta$-BR largely only affects the branching step, it can be adopted as a drop-in replacement in existing codebases, as we show in our provided implementation. Beyond CCBS, the analytical framework and termination criterion provide a systematic way to evaluate other CCBS-like MAPFR solvers and future extensions._
+_Leveraging the framework, we introduce a branching rule (δ-BR) and prove it restores soundness and termination guarantees. Consequently, the resulting CCBS variant is both sound and solution complete, matching the guarantees of the discrete-time CBS for the first time in the continuous domain. On a constructed example, CCBS with δ-BR improves sum-of-costs from 10.707 to 9.000 (≈16 % lower) compared to the reference implementation. Across benchmarks, the reference implementation is generally able to find solutions faster than CCBS with δ-BR due to its more aggressive pruning. However, this comes at the cost of occasional sub-optimality and potential non-termination when all solutions are pruned, whereas δ-BR preserves optimality and guarantees termination by design. Because δ-BR largely only affects the branching step, it can be adopted as a drop-in replacement in existing codebases, as we show in our provided implementation. Beyond CCBS, the analytical framework and termination criterion provide a systematic way to evaluate other CCBS-like MAPFR solvers and future extensions._
 
 <br> 
 
@@ -23,7 +23,7 @@ _Leveraging the framework, we introduce a branching rule (_$\delta$_-BR) and pro
 ## Repository Structure
 
 This repository is forked from `PathPlanning/Continuous-CBS:master` and contains two branches:
-- ```master```: contains CCBS using $\delta$-BR.
+- ```master```: contains CCBS using δ-BR.
 - ```originalCCBS```: contains CCBS using the original branching rule.
 
 Contents
@@ -70,13 +70,13 @@ runs CCBS on the given problem and outputs a result file in the same directory n
 #### Config options
 
 * `<use_cardinal>` - controls whether the algorithm is looking for cardinal and semi-cardinal collisions or not. Possible values are `1`(true) or `0` (false).
-* `<use_disjoint_splitting>` - From the original CCBS repository. This is currently **not supported** with $\delta$-BR.
-* `<hlh_type>` - From the original CCBS repository. This is currently **not supported** with $\delta$-BR.
+* `<use_disjoint_splitting>` - From the original CCBS repository. This is currently **not supported** with δ-BR.
+* `<hlh_type>` - From the original CCBS repository. This is currently **not supported** with δ-BR.
 * `<connectedness>` - controls the connectedness of the grid. Possible values: `2` - 4 cardinal neighbors; `3` - 4 cardinal + 4 diagonal; `4` - 16 neighbors; `5` - 32 neighbors. In case if the map is represented as roadmap this parameter is ignored.
 * `<timelimit>` - controls the maximum runtime of the algorithm. Possible values are >0. For example value 60 means that the algorithm can spend up to 60 seconds to find a solution.
 * `<agent_size>` - controls the size (radii) of the agents' shape. Possible values are in the range (0, 0.5].
 * `<precision>` - controls how precise the end of collision interval is detected (the moment of time when there is no more collision between the agents). The lower the value - the preciser the algorithm finds the end of collision interval, but it takes a bit more time. Possible values are >0.
-* `<branching_gamma>` - controls the gamma value used in $\delta$-BR. This option is not available on the ```originalCCBS``` branch.
+* `<branching_gamma>` - controls the gamma value used in δ-BR. This option is not available on the ```originalCCBS``` branch.
 
 
 
