@@ -8,7 +8,7 @@
   <br>
 <br>
 
-This is the official respository for **Optimal Multi-Agent Path Finding in Continuous Time**, which introduces a new branching rule ($\delta$-BR) for CCBS with soundness and solution-completeness guarantees. That is, CCBS using this branching rule (CCBS- $\delta$-BR) is guaranteed to terminate on any solvable continuous-time MAPF problem with an optimal solution. The pre-print version is available at [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-B31B1B.svg)](https://www.arxiv.org/abs/2508.16410).
+This is the official respository for **Optimal Multi-Agent Path Finding in Continuous Time**, which introduces a new branching rule (δ-BR) for CCBS with guarantees of soundness and solution completeness. That is, CCBS using this branching rule (CCBS-δ-BR) is guaranteed to terminate on any solvable continuous-time MAPF problem with an optimal solution. The pre-print version is available at [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-B31B1B.svg)](https://www.arxiv.org/abs/2508.16410).
 
 <br> 
 
