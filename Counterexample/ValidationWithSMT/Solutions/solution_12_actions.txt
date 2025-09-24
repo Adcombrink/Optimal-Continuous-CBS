@@ -1,0 +1,153 @@
+
+begin processing instance:  PaperExample
+Optimizer
+Make Span:  8.99999999997222153586?
+Agent A1
+    Action 0 - start: 0.0, end: 0.2071067811707405
+        A1 at node n4
+        A1 wait: 0.2071067811707405
+    Action 1 - start: 0.2071067811707405, end: 0.2071067811707405
+        A1 at node n4
+        A1 wait: 1.12e-18
+    Action 2 - start: 0.2071067811707405, end: 0.2071067811707405
+        A1 at node n4
+        A1 wait: 1.12e-18
+    Action 3 - start: 0.2071067811707405, end: 0.2071067811707405
+        A1 at node n4
+        A1 wait: 1.12e-18
+    Action 4 - start: 0.2071067811707405, end: 0.2071067811707405
+        A1 at node n4
+        A1 wait: 1.12e-18
+    Action 5 - start: 0.2071067811707405, end: 0.20710678117074052
+        A1 at node n4
+        A1 wait: 1.12e-18
+    Action 6 - start: 0.20710678117074052, end: 0.49999999998148104
+        A1 at node n4
+        A1 wait: 0.2928932188107405
+    Action 7 - start: 0.49999999998148104, end: 1.999999999981481
+        A1 at node n4
+        move to: n5 (distance: 1.5)
+    Action 8 - start: 1.999999999981481, end: 2.999999999981481
+        A1 at node n5
+        move to: n6 (distance: 1.0)
+    Action 9 - start: 2.999999999981481, end: 3.2928932188107405
+        A1 at node n6
+        A1 wait: 0.29289321882925945
+    Action 10 - start: 3.2928932188107405, end: 3.2928932188107405
+        A1 at node n6
+        A1 wait: 1.12e-18
+    Action 11 - start: 3.2928932188107405, end: 13.292893218810741
+        A1 at node n6
+        A1 wait: 10.0
+Agent A2
+    Action 0 - start: 0.0, end: 0.9999999999907405
+        A2 at node n5
+        A2 wait: 0.9999999999907405
+    Action 1 - start: 0.9999999999907405, end: 0.9999999999907405
+        A2 at node n5
+        A2 wait: 1.12e-18
+    Action 2 - start: 0.9999999999907405, end: 0.9999999999907405
+        A2 at node n5
+        A2 wait: 1.12e-18
+    Action 3 - start: 0.9999999999907405, end: 0.9999999999907405
+        A2 at node n5
+        A2 wait: 1.12e-18
+    Action 4 - start: 0.9999999999907405, end: 0.9999999999907405
+        A2 at node n5
+        A2 wait: 1.12e-18
+    Action 5 - start: 0.9999999999907405, end: 0.9999999999907405
+        A2 at node n5
+        A2 wait: 1.12e-18
+    Action 6 - start: 0.9999999999907405, end: 0.9999999999907405
+        A2 at node n5
+        A2 wait: 1.12e-18
+    Action 7 - start: 0.9999999999907405, end: 0.9999999999907405
+        A2 at node n5
+        A2 wait: 1.12e-18
+    Action 8 - start: 0.9999999999907405, end: 1.9999999999907405
+        A2 at node n5
+        move to: n2 (distance: 1.0)
+    Action 9 - start: 1.9999999999907405, end: 2.9999999999907403
+        A2 at node n2
+        move to: n5 (distance: 1.0)
+    Action 10 - start: 2.9999999999907403, end: 3.2928932188107405
+        A2 at node n5
+        A2 wait: 0.29289321881999997
+    Action 11 - start: 3.2928932188107405, end: 13.292893218810741
+        A2 at node n5
+        A2 wait: 10.0
+Agent A3
+    Action 0 - start: 0.0, end: 1.0
+        A3 at node n1
+        move to: n2 (distance: 1.0)
+    Action 1 - start: 1.0, end: 2.0
+        A3 at node n2
+        move to: n3 (distance: 1.0)
+    Action 2 - start: 2.0, end: 2.0857864376307407
+        A3 at node n3
+        A3 wait: 0.08578643763074083
+    Action 3 - start: 2.0857864376307407, end: 2.0857864376307407
+        A3 at node n3
+        A3 wait: 1.12e-18
+    Action 4 - start: 2.0857864376307407, end: 2.0857864376307407
+        A3 at node n3
+        A3 wait: 1.12e-18
+    Action 5 - start: 2.0857864376307407, end: 2.0857864376307407
+        A3 at node n3
+        A3 wait: 1.12e-18
+    Action 6 - start: 2.0857864376307407, end: 2.2928932188107405
+        A3 at node n3
+        A3 wait: 0.20710678117999978
+    Action 7 - start: 2.2928932188107405, end: 2.2928932188107405
+        A3 at node n3
+        A3 wait: 1.12e-18
+    Action 8 - start: 2.2928932188107405, end: 2.2928932188107405
+        A3 at node n3
+        A3 wait: 1.12e-18
+    Action 9 - start: 2.2928932188107405, end: 2.2928932188107405
+        A3 at node n3
+        A3 wait: 1.12e-18
+    Action 10 - start: 2.2928932188107405, end: 3.2928932188107405
+        A3 at node n3
+        A3 wait: 0.9999999999999999
+    Action 11 - start: 3.2928932188107405, end: 13.292893218810741
+        A3 at node n3
+        A3 wait: 10.0
+Agent A4
+    Action 0 - start: 0.0, end: 1.0
+        A4 at node n0
+        move to: n1 (distance: 1.0)
+    Action 1 - start: 1.0, end: 1.085786437630741
+        A4 at node n1
+        A4 wait: 0.08578643763074083
+    Action 2 - start: 1.085786437630741, end: 1.085786437630741
+        A4 at node n1
+        A4 wait: 1.12e-18
+    Action 3 - start: 1.085786437630741, end: 1.2071067811614808
+        A4 at node n1
+        A4 wait: 0.12132034353074009
+    Action 4 - start: 1.2071067811614808, end: 1.2071067811614808
+        A4 at node n1
+        A4 wait: 1.12e-18
+    Action 5 - start: 1.2071067811614808, end: 1.2071067811614808
+        A4 at node n1
+        A4 wait: 1.12e-18
+    Action 6 - start: 1.2071067811614808, end: 1.2071067811614808
+        A4 at node n1
+        A4 wait: 1.12e-18
+    Action 7 - start: 1.2071067811614808, end: 1.2071067811614808
+        A4 at node n1
+        A4 wait: 1.12e-18
+    Action 8 - start: 1.2071067811614808, end: 1.2071067811614808
+        A4 at node n1
+        A4 wait: 1.12e-18
+    Action 9 - start: 1.2071067811614808, end: 1.2071067811614808
+        A4 at node n1
+        A4 wait: 1.12e-18
+    Action 10 - start: 1.2071067811614808, end: 2.0857864376307407
+        A4 at node n1
+        A4 wait: 0.8786796564692599
+    Action 11 - start: 2.0857864376307407, end: 12.085786437630741
+        A4 at node n1
+        A4 wait: 10.0
+solving time:  348997.75
