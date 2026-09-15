@@ -3,7 +3,9 @@
 <h1 align="center">Optimal Multi-Agent Path Finding in Continuous Time</h1>
 <br>
   <p align="center">
-    Alvin Combrink, Sabino Franceso Roselli, and Martin Fabian.
+    <a href="https://scholar.google.com/citations?user=SJwGlGYAAAAJ&hl=en">Alvin Combrink</a>, 
+    <a href="https://scholar.google.com/citations?user=souzKXIAAAAJ&hl=en">Sabino Franceso Roselli</a>, 
+    and <a href="https://scholar.google.com/citations?user=Vv2dq8EAAAAJ&hl=en&oi=ao">Martin Fabian</a>.
   </p>
   <br>
 <br>
@@ -11,17 +13,25 @@
 This is the official repository for the publication **Optimal Multi-Agent Path Finding in Continuous Time**, which introduces **Optimal Continuous-time Conflict-Based Search (OC-CBS)**.
 OC-CBS is based on Continuous-time Conflict-Based Search (CCBS) but with a new branching rule (δ-BR) that restores guarantees of exactness and solution completeness. 
 That is, OC-CBS is guaranteed to terminate on any solvable continuous-time MAPF problem with an optimal solution. 
-It is currently under review, the pre-print can be found at [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-B31B1B.svg)](https://www.arxiv.org/abs/2508.16410).
+It is currently under review at Artificial Intelligence (Elsevier), the pre-print can be found at [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-B31B1B.svg)](https://www.arxiv.org/abs/2508.16410).
 
 <br> 
 
 ## Abstract
 
-**This abstract is from the pre-print where OC-CBS is called "CCBS with δ-BR". To be updated with the new pre-print.**
+_Continuous-time Conflict Based Search (CCBS) has been widely used as an exact baseline for Continuous-time Multi-Agent Path Finding (MAPF<sub>R</sub>),
+and its correctness guarantees underpin a range of continuation methods built on top of it.
+Recent work, however, has shown that CCBS's guarantees of exactness and solution completeness do not in fact hold:
+optimal solutions can be removed from the search, causing the algorithm to return suboptimal solutions. 
+This paper establishes
+sufficient conditions for exactness and solution completeness in CCBS-style algorithms,
+and introduces Optimal Continuous-time Conflict-Based Search (OC-CBS) which satisfies these conditions.
+OC-CBS therefore guarantees an optimal solution on every solvable MAPF<sub>R</sub> instance.
+Experiments on benchmark problems 
+show that OC-CBS remains competitive with CCBS in runtime while providing formal correctness guarantees.
+Because OC-CBS is a drop-in replacement for CCBS, it also restores the theoretical guarantees of existing methods that relied on CCBS's now-invalidated correctness.
+Finally, the framework and correctness criteria offer a general foundation for analyzing and designing future exact MAPF<sub>R</sub> solvers._ 
 
-_Continuous-time Conflict Based-Search (CCBS) has long been viewed as the de facto optimal solver for multi-agent path finding in continuous time (MAPFR), yet recent critiques show that the theoretically described CCBS can fail to terminate on solvable MAPFR problems while the publicly available reference implementation can return sub-optimal solutions. This work presents an analytical framework that yields simple and sufficient conditions under which any CCBS-style algorithm is both sound (returns only optimal solutions) and solution complete (terminates on every solvable MAPFR problem). Investigating the reference implementation reveals that it violates the soundness conditions, with counterexamples demonstrating sub-optimality._
-
-_Leveraging the framework, we introduce a branching rule (δ-BR) and prove it restores soundness and termination guarantees. Consequently, the resulting CCBS variant is both sound and solution complete, matching the guarantees of the discrete-time CBS for the first time in the continuous domain. On a constructed example, CCBS with δ-BR improves sum-of-costs from 10.707 to 9.000 (≈16 % lower) compared to the reference implementation. Across benchmarks, the reference implementation is generally able to find solutions faster than CCBS with δ-BR due to its more aggressive pruning. However, this comes at the cost of occasional sub-optimality and potential non-termination when all solutions are pruned, whereas δ-BR preserves optimality and guarantees termination by design. Because δ-BR largely only affects the branching step, it can be adopted as a drop-in replacement in existing codebases, as we show in our provided implementation. Beyond CCBS, the analytical framework and termination criterion provide a systematic way to evaluate other CCBS-like MAPFR solvers and future extensions._
 
 <br> 
 
